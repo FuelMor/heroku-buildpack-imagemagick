@@ -8,10 +8,23 @@ echo "-----> Install ImageMagick"
 
 BUILD_DIR=$1
 CACHE_DIR=$2
+ENV_DIR=$3
 VENDOR_DIR="$BUILD_DIR/vendor"
 INSTALL_DIR="$VENDOR_DIR/imagemagick"
-IMAGE_MAGICK_VERSION="${IMAGE_MAGICK_VERSION:-7.0.11-3}"
+
+if [ ! -f $ENV_DIR/IMAGE_MAGICK_VERSION ]; then
+  echo "Error: IMAGE_MAGICK_VERSION env not set" | indent
+  exit 1;
+fi
+IMAGE_MAGICK_VERSION=$(cat $ENV_DIR/IMAGE_MAGICK_VERSION)
 CACHE_FILE="$CACHE_DIR/imagemagick-$IMAGE_MAGICK_VERSION.tar.gz"
+
+if [ ! -f $ENV_DIR/IMAGE_MAGICK_SHARED_SECRET ]; then
+  echo "Error: IMAGE_MAGICK_SHARED_SECRET env not set" | indent
+  exit 1;
+fi
+
+IMAGE_MAGICK_SHARED_SECRET=$(cat $ENV_DIR/IMAGE_MAGICK_SHARED_SECRET)
 
 if [ ! -f $CACHE_FILE ]; then
   # install imagemagick
@@ -62,10 +75,28 @@ echo "-----> Writing policy file"
 mkdir -p $INSTALL_DIR/etc/ImageMagick
 cat > $INSTALL_DIR/policy.xml <<EOF
 <policymap>
-  <policy domain="coder" rights="none" pattern="EPHEMERAL" />
-  <policy domain="coder" rights="none" pattern="HTTPS" />
-  <policy domain="coder" rights="none" pattern="MVG" />
-  <policy domain="coder" rights="none" pattern="MSL" />
+  <!-- temporary path must be a preexisting writable directory -->
+  <policy domain="resource" name="temporary-path" value="/tmp"/>
+  <policy domain="resource" name="memory" value="256MiB"/>
+  <policy domain="resource" name="list-length" value="32"/>
+  <policy domain="resource" name="width" value="8KP"/>
+  <policy domain="resource" name="height" value="8KP"/>
+  <policy domain="resource" name="map" value="512MiB"/>
+  <policy domain="resource" name="area" value="16KP"/>
+  <policy domain="resource" name="disk" value="1GiB"/>
+  <policy domain="resource" name="file" value="768"/>
+  <policy domain="resource" name="thread" value="2"/>
+  <policy domain="resource" name="time" value="120"/>
+  <policy domain="coder" rights="none" pattern="*" />
+  <policy domain="delegate" rights="none" pattern="*" />
+  <policy domain="filter" rights="none" pattern="*" />
+  <policy domain="coder" rights="read | write" pattern="{PDF,JPEG,PNG}" />
+  <policy domain="path" rights="none" pattern="@*"/>  <!-- indirect reads not permitted -->
+  <policy domain="cache" name="memory-map" value="anonymous"/>
+  <policy domain="cache" name="synchronize" value="true"/>
+  <policy domain="cache" name="shared-secret" value="$IMAGE_MAGICK_SHARED_SECRET" stealth="True"/>
+  <policy domain="system" name="precision" value="6"/>
+  <policy domain="system" name="shred" value="1"/>
 </policymap>
 EOF
 
