@@ -90,7 +90,7 @@ cat > $INSTALL_DIR/policy.xml <<EOF
   <policy domain="coder" rights="none" pattern="*" />
   <policy domain="delegate" rights="none" pattern="*" />
   <policy domain="filter" rights="none" pattern="*" />
-  <policy domain="coder" rights="read | write" pattern="{PDF,JPEG,PNG}" />
+  <policy domain="coder" rights="read | write" pattern="{PDF,JPEG,JPG,PNG}" />
   <policy domain="path" rights="none" pattern="@*"/>  <!-- indirect reads not permitted -->
   <policy domain="cache" name="memory-map" value="anonymous"/>
   <policy domain="cache" name="synchronize" value="true"/>
